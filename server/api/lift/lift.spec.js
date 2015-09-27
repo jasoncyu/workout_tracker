@@ -43,7 +43,7 @@ describe('POST /api/lifts', function() {
         if (err) return done(err);
         res.body.should.be.instanceof(Object);
         res.body.name.should.be.instanceof(String);
-        res.body.should.have.property('name', 'bench press');
+        res.body.should.have.property('name', 'bench_press');
         done();
       });
   });
@@ -55,6 +55,18 @@ describe('POST /api/lifts', function() {
       .expect(400)
       .end(function(err, res) {
         if (err) return done(err);
+        done();
+      });
+  });
+
+  it('should not allow creating two lifts with the same name even if the case is different', function(done) {
+    request(app)
+      .post('/api/lifts')
+      .send({name: liftName.toUpperCase()})
+      .expect(400)
+      .end(function(err, res) {
+        if (err) return done(err);
+
         done();
       });
   });

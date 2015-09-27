@@ -55,7 +55,7 @@ exports.destroy = function(req, res) {
 };
 
 function handleError(res, err) {
-  if (err.name === 'ValidationError') {
+  if (err.name === 'MongoError') {
     return res.status(400).send(err);
   }
   return res.status(500).send(err);
