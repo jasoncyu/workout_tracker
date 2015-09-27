@@ -55,5 +55,8 @@ exports.destroy = function(req, res) {
 };
 
 function handleError(res, err) {
+  if (err.name === 'ValidationError') {
+    return res.status(400).send(err);
+  }
   return res.status(500).send(err);
 }
