@@ -3,7 +3,7 @@
 var should = require('should');
 var app = require('../../app');
 var request = require('supertest');
-var Lift = require('../lift/lift.model');
+var Lift = require('../lift/lift.model').Lift;
 
 var removeAllLifts = function(done) {
   Lift.remove({}, function() {

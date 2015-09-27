@@ -4,7 +4,7 @@
 
 'use strict';
 
-var Lift = require('./lift.model');
+var Lift = require('./lift.model').Lift;
 
 exports.register = function(socket) {
   Lift.schema.post('save', function (doc) {

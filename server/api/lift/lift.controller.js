@@ -1,7 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
-var Lift = require('./lift.model');
+var Lift = require('./lift.model').Lift;
 
 // Get list of lifts
 exports.index = function(req, res) {
