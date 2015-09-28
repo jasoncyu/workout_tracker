@@ -5,19 +5,35 @@ var mongoose = require('mongoose'),
     uniqueValidator = require('mongoose-unique-validator'),
     _ = require('lodash');
 
-/* Set */
+/* LiftSet */
 var SetSchema = new Schema({
   // The index of this set relative to the Lift this belongs to.
   setIndex: {type: Number, required: true, unique: true},
   // TARGET. How many reps/sets we want to get.
-  targetReps: {type: Number},
+  targetMinReps: {type: Number},
+  targetMaxReps: {type: Number},
   targetWeight: {type: Number},
   // The number of reps in this set.
   reps: {type: Number},
   // The amount of weight used in this set.
   weight: {type: Number}
 });
-var Set = mongoose.model('Set', SetSchema);
+
+/**
+ * Returns true if this set has actual reps and those
+ * reps are in the given rep range.
+ */
+SetSchema.methods.inRepRange = function() {
+  if (!this.reps) {
+    return false;
+  }
+
+  return (
+    (this.reps >= (this.targetMinReps || Number.NEGATIVE_INFINITY)) &&
+      (this.reps <= (this.targetMaxReps || Number.POSITIVE_INFINITY)));
+};
+
+var LiftSet = mongoose.model('LiftSet', SetSchema);
 
 /* Lift */
 // Schema
@@ -31,6 +47,8 @@ LiftSchema.pre('save', function(next) {
   this.name = this.name.toLowerCase().split(/\s/).join('_');
   next();
 });
+// Methods need to be declared on the schema *before* the model
+// is registered.
 /* Add a set to this lift */
 LiftSchema.methods.addSet = function(props, next) {
   var nextSetIndex = this.sets.length;
@@ -44,7 +62,7 @@ LiftSchema.methods.addSet = function(props, next) {
   //   });
 
   // Approach 2
-  this.sets.push(new Set({
+  this.sets.push(new LiftSet({
     targetWeight: props.targetWeight,
     targetReps: props.targetReps,
     weight: props.weight,
@@ -60,4 +78,4 @@ LiftSchema.methods.addSet = function(props, next) {
 var Lift = mongoose.model('Lift', LiftSchema);
 
 exports.Lift = Lift;
-exports.Set = Set;
+exports.LiftSet = LiftSet;

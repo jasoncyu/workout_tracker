@@ -4,12 +4,33 @@ var should = require('should');
 var app = require('../../app');
 var request = require('supertest');
 var Lift = require('../lift/lift.model').Lift;
+var LiftSet = require('../lift/lift.model').LiftSet;
+var _ = require('lodash');
 
 var removeAllLifts = function(done) {
   Lift.remove({}, function() {
     done();
   });
 };
+
+
+describe('Set model', function() {
+  it('should know if its reps are in its range or not', function(done) {
+    var repRange = {targetMinReps: 8, targetMaxReps: 12};
+    var testData = {
+      10: true,
+      undefined: false,
+      14: false
+    };
+    for (var reps in testData) {
+      var exp = testData[reps];
+      var liftSet = new LiftSet(_.merge(repRange, {reps: reps}));
+      var act = (liftSet).inRepRange();
+      should.equal(act, exp);
+    }
+    done();
+  });
+});
 
 describe('Lift model', function() {
   before(function(done) {

@@ -461,7 +461,9 @@ module.exports = function (grunt) {
 
     mochaTest: {
       options: {
-        reporter: 'spec'
+        // Using 'tap' gives a full stack trace on error. The default
+        // 'spec' reporter only outputs a single error line.
+        reporter: 'tap'
       },
       src: ['server/**/*.spec.js']
     },
