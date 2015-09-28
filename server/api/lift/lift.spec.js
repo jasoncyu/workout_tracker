@@ -11,6 +11,30 @@ var removeAllLifts = function(done) {
   });
 };
 
+describe('Lift model', function() {
+  before(function(done) {
+    removeAllLifts(done);
+  });
+  after(function(done) {
+    removeAllLifts(done);
+  });
+
+  it('can let you add sets', function(done) {
+    Lift.create({name: 'bench press'}, function(err, lift) {
+      if (err) throw err;
+
+      lift.addSet({weight: 200, reps: 10}).then(function() {
+        return lift.addSet({weight: 250, reps: 3});
+      }).then(function() {
+        lift.sets[0].setIndex.should.be.eql(0);
+        lift.sets[1].setIndex.should.be.eql(1);
+        lift.sets.length.should.be.eql(2);
+        done();
+      });
+    });
+  });
+});
+
 describe('GET /api/lifts', function() {
   it('should respond with JSON array', function(done) {
     request(app)

@@ -2,7 +2,8 @@
 
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema,
-    uniqueValidator = require('mongoose-unique-validator');
+    uniqueValidator = require('mongoose-unique-validator'),
+    _ = require('lodash');
 
 /* Set */
 var SetSchema = new Schema({
@@ -18,7 +19,8 @@ var Set = mongoose.model('Set', SetSchema);
 /* Lift */
 // Schema
 var LiftSchema = new Schema({
-  name: {type: String, required: true, unique: true}
+  name: {type: String, required: true, unique: true},
+  sets: [SetSchema]
 });
 LiftSchema.plugin(uniqueValidator);
 LiftSchema.pre('save', function(next) {
@@ -26,6 +28,28 @@ LiftSchema.pre('save', function(next) {
   this.name = this.name.toLowerCase().split(/\s/).join('_');
   next();
 });
+/* Add a set to this lift */
+LiftSchema.methods.addSet = function(props, next) {
+  var nextSetIndex = this.sets.length;
+  // Approach 1
+  // This approach doesn't work for some reason
+  // var set = this.sets.create(
+  //   {
+  //     weight: props.weight,
+  //     reps: props.reps,
+  //     setIndex: nextSetIndex
+  //   });
+
+  // Approach 2
+  this.sets.push(new Set({
+    weight: props.weight,
+    reps: props.reps,
+    setIndex: nextSetIndex
+  }));
+  // Return the promise that resolves after `this` lift is done
+  // saving.
+  return this.save();
+};
 
 // Model
 var Lift = mongoose.model('Lift', LiftSchema);
