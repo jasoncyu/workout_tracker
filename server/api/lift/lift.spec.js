@@ -25,8 +25,11 @@ describe('Lift model', function() {
 
       lift.addSet({weight: 200, reps: 10}).then(function() {
         return lift.addSet({weight: 250, reps: 3});
-      }).then(function() {
+      }).then(function(err, doc) {
         lift.sets[0].setIndex.should.be.eql(0);
+        should.not.exist(lift.sets[0].targetWeight);
+        lift.sets[0].setIndex.should.be.eql(0);
+
         lift.sets[1].setIndex.should.be.eql(1);
         lift.sets.length.should.be.eql(2);
         done();

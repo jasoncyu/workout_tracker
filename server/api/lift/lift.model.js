@@ -9,8 +9,11 @@ var mongoose = require('mongoose'),
 var SetSchema = new Schema({
   // The index of this set relative to the Lift this belongs to.
   setIndex: {type: Number, required: true, unique: true},
+  // TARGET. How many reps/sets we want to get.
+  targetReps: {type: Number},
+  targetWeight: {type: Number},
   // The number of reps in this set.
-  reps: {type: Number, required: true},
+  reps: {type: Number},
   // The amount of weight used in this set.
   weight: {type: Number}
 });
@@ -42,6 +45,8 @@ LiftSchema.methods.addSet = function(props, next) {
 
   // Approach 2
   this.sets.push(new Set({
+    targetWeight: props.targetWeight,
+    targetReps: props.targetReps,
     weight: props.weight,
     reps: props.reps,
     setIndex: nextSetIndex
