@@ -3,9 +3,15 @@
 var should = require('should');
 var app = require('../../app');
 var request = require('supertest');
+
 var Lift = require('../lift/lift.model').Lift;
 var LiftSet = require('../lift/lift.model').LiftSet;
+var WeightType = require('../lift/lift.model').WeightType;
+var Promise = require('bluebird');
+Promise.promisifyAll(require('mongoose'));
+
 var _ = require('lodash');
+
 
 var removeAllLifts = function(done) {
   Lift.remove({}, function() {
@@ -29,6 +35,45 @@ describe('Set model', function() {
       should.equal(act, exp);
     }
     done();
+  });
+
+  describe('Weight progression', function() {
+    describe('Linear progression', function() {
+      it('for barbells should work', function(done) {
+        var testData = {
+          100: 105,
+          200: 205,
+          300: 305
+        };
+        var barbellLift = new Lift({
+          name: 'deadlift',
+          weightMedium: WeightType.BARBELL.value
+        });
+        var promises = [];
+        _.forOwn(testData, function(exp, oldTarget) {
+          promises.push(new Promise(function(resolve, reject) {
+            barbellLift.addSet({targetWeight: oldTarget}).then(function() {
+              resolve();
+            }).catch(function(err) {
+              console.log(err);
+            });
+          }));
+        });
+
+        Promise.all(promises).then(function() {
+          barbellLift.sets.forEach(function(liftSet) {
+            var act = liftSet.linearNextWeight({percent: 2.5});
+            var exp = testData[liftSet.targetWeight];
+            should.equal(act, exp);
+          });
+          done();
+        }).catch(function(err) {
+          console.log(err);
+          console.log('final error case');
+          done();
+        });
+      });
+    });
   });
 });
 
