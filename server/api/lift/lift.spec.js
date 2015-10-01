@@ -49,7 +49,8 @@ describe('Set model', function() {
         var testData = {
           100: 105,
           200: 205,
-          300: 305
+          300: 310,
+          400: 410
         };
         var barbellLift = new Lift({
           name: 'deadlift',

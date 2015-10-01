@@ -88,10 +88,10 @@ SetSchema.methods.linearNextWeight = function(params) {
   var minJumpNextWeight = oldWeight + lift.weightMultiple;
 
   // The amount of weight we would jump to based on percentages.
+  // We increase the weight, then round to the nearest multiple.
   var newRawWeight = oldWeight * (1 + params.percent / 100);
-  var percentageBasedNextWeight = Math.floor(
-      newRawWeight / lift.weightMultiple) * lift.weightMultiple;
-
+  var percentageBasedNextWeight = Math.round(
+    newRawWeight / lift.weightMultiple) * lift.weightMultiple;
   // If the percentage based jump is too small, we jump to the next
   // possible weight. Otherwise, we use the percentage based jump.
   if (params.direction === 'up') {
