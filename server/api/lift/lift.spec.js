@@ -74,8 +74,7 @@ describe('Set model', function() {
           });
           done();
         }).catch(function(err) {
-          console.log(err);
-          console.log('final error case');
+          if (err) throw err;
           done();
         });
       });

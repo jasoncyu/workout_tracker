@@ -82,22 +82,15 @@ SetSchema.methods.linearNextWeight = function(params) {
   // Cable machines vary, but the most common kind lets you load
   // multiples of 10.
   var lift = this.parent();
-  var defaultJump;
-  if (lift.weightMedium === WeightType.BARBELL.value ||
-      lift.weightMedium === WeightType.DUMBBELL.value) {
-    defaultJump = 5;
-  } else if (lift.weightMedium === WeightType.CABLE_MACHINE.value) {
-    defaultJump = 10;
-  }
 
   // The amount of weight we should use next if we jump up by the
   // smallest amount of weight possible.
-  var minJumpNextWeight = oldWeight + defaultJump;
+  var minJumpNextWeight = oldWeight + lift.weightMultiple;
 
   // The amount of weight we would jump to based on percentages.
   var newRawWeight = oldWeight * (1 + params.percent / 100);
   var percentageBasedNextWeight = Math.floor(
-      newRawWeight / defaultJump) * defaultJump;
+      newRawWeight / lift.weightMultiple) * lift.weightMultiple;
 
   // If the percentage based jump is too small, we jump to the next
   // possible weight. Otherwise, we use the percentage based jump.
@@ -115,8 +108,17 @@ var LiftSet = mongoose.model('LiftSet', SetSchema);
 var LiftSchema = new Schema({
   name: {type: String, required: true, unique: true},
   sets: [SetSchema],
+  // The minimum amount of weight that can be loaded. It's constrained b/c
+  // dumbbells only go so small, barbells only get so light, and the smallest
+  // amount you can load on a cable machine is machine model dependent.
+  weightMin: {type: Number},
+  // For free weights, there isn't a max, but cable machines typically have a
+  // max.
+  weightMax: {type: Number},
+  // The minimum amount of weight we can increase/decrease by.
+  weightMultiple: {type: Number},
   // The type of thing (machine, dumbbell, barbell, etc.) that this
-  // lift uses
+  // lift uses.
   // Store enum string values in mongo.
   weightMedium: {
     type: String,
@@ -128,6 +130,17 @@ LiftSchema.plugin(uniqueValidator);
 LiftSchema.pre('save', function(next) {
   // Transform lift name into something like 'bench_press'
   this.name = this.name.toLowerCase().split(/\s/).join('_');
+
+  // Set reasonable weight info for barbells and dumbbells.
+  // We're counting on cable machine lifts to set this themselves.
+  if (this.weightMedium === WeightType.BARBELL.value) {
+    this.weightMin = 45;
+    this.weightMultiple = 5;
+  } else if (this.weightMedium === WeightType.DUMBBELL.value) {
+    this.weightMin = 5;
+    this.weightMax = 150;
+    this.weightMultiple = 5;
+  }
   next();
 });
 // Methods need to be declared on the schema *before* the model
