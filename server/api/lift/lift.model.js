@@ -59,8 +59,8 @@ SetSchema.methods.buildNextSet = function(options) {
 
 
 /**
- * Returns the next weight to progress to, going up in a linear
- * fashion by a given percent, 2.5 by default. So we go up in weight
+ * Returns the weight we're moving to, either up or down,
+ * fashion by a given percent, 2.5 by default. So we go move in weight
  * by 2.5% or the next available weight, whichever is a larger jump.
  */
 SetSchema.methods.linearNextWeight = function(params) {
@@ -69,6 +69,10 @@ SetSchema.methods.linearNextWeight = function(params) {
   var oldWeight = this.targetWeight;
   // Default amount to increase current weight by
   params.percent = params.percent || 2.5;
+  // The direction to move the weight next. We either increment the weight
+  // (up) or d
+  params.direction = params.direction || 'up';
+
 
   // Round down to nearest appropriate weight, unless that would mean
   // there's no change in weight, in which case we just increment to
@@ -97,7 +101,11 @@ SetSchema.methods.linearNextWeight = function(params) {
 
   // If the percentage based jump is too small, we jump to the next
   // possible weight. Otherwise, we use the percentage based jump.
-  return Math.max(minJumpNextWeight, percentageBasedNextWeight);
+  if (params.direction === 'up') {
+    return Math.max(minJumpNextWeight, percentageBasedNextWeight);
+  } else if (params.direction === 'down') {
+    return Math.min(minJumpNextWeight, percentageBasedNextWeight);
+  }
 };
 
 var LiftSet = mongoose.model('LiftSet', SetSchema);

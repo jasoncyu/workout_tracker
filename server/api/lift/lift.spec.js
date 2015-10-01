@@ -37,8 +37,14 @@ describe('Set model', function() {
     done();
   });
 
-  describe('Weight progression', function() {
-    describe('Linear progression', function() {
+  describe('Weight', function() {
+    describe('going down by 10%', function() {
+      it('should work', function(done) {
+        done();
+      });
+    });
+
+    describe('moving up linearly', function() {
       it('for barbells should work', function(done) {
         var testData = {
           100: 105,
