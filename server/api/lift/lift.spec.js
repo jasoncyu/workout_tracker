@@ -76,6 +76,10 @@ describe('Set model', function() {
               });
           }));
         });
+
+        Promise.all(promises).then(function() {
+          done();
+        });
       });
 
       it('should work for cables that are multiples of 10', function(done) {
