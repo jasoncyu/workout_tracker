@@ -59,26 +59,41 @@ describe('Set model', function() {
         var promises = [];
         _.forOwn(testData, function(exp, oldTarget) {
           promises.push(new Promise(function(resolve, reject) {
-            barbellLift.addSet({targetWeight: oldTarget}).then(function() {
-              resolve();
-            }).catch(function(err) {
-              console.log(err);
-            });
+            barbellLift
+              .addSet({targetWeight: oldTarget})
+              .then(function(newSet) {
+                // Get the variant of Set that has access to its parent
+                // so that we can call the nextWeight function on it.
+                var liftSet = barbellLift.sets.id(newSet);
+
+                var act = liftSet.linearNextWeight({percent: 2.5});
+                var exp = testData[liftSet.targetWeight];
+                should.equal(act, exp);
+                resolve();
+              }).catch(function(err) {
+                if (err) throw err;
+                done();
+              });
           }));
         });
-
-        Promise.all(promises).then(function() {
-          barbellLift.sets.forEach(function(liftSet) {
-            var act = liftSet.linearNextWeight({percent: 2.5});
-            var exp = testData[liftSet.targetWeight];
-            should.equal(act, exp);
-          });
-          done();
-        }).catch(function(err) {
-          if (err) throw err;
-          done();
-        });
       });
+
+      it('should work for cables that are multiples of 10', function(done) {
+        var cableLift = new Lift({
+          weightMedium: WeightType.CABLE_MACHINE.value,
+          weightMultiple: 10
+        });
+        var testData = {
+          40: 50,
+          50: 60,
+          100: 110,
+          200: 210
+        };
+        // _.forOwn(testData, function(exp, oldTarget) {
+        // })
+        done();
+      });
+
     });
   });
 });

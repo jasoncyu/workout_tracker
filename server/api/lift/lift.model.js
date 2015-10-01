@@ -4,7 +4,8 @@ var mongoose = require('mongoose'),
     Schema = mongoose.Schema,
     uniqueValidator = require('mongoose-unique-validator'),
     _ = require('lodash'),
-    Enum = require('enum');
+    Enum = require('enum'),
+    Promise = require('bluebird');
 
 var WeightType = new Enum({
   DUMBBELL: 'dumbbell',
@@ -147,27 +148,26 @@ LiftSchema.pre('save', function(next) {
 // is registered.
 /* Add a set to this lift */
 LiftSchema.methods.addSet = function(props, next) {
-  var nextSetIndex = this.sets.length;
-  // Approach 1
-  // This approach doesn't work for some reason
-  // var set = this.sets.create(
-  //   {
-  //     weight: props.weight,
-  //     reps: props.reps,
-  //     setIndex: nextSetIndex
-  //   });
-
-  // Approach 2
-  this.sets.push(new LiftSet({
+  var newSet = new LiftSet({
     targetWeight: props.targetWeight,
     targetReps: props.targetReps,
     weight: props.weight,
     reps: props.reps,
-    setIndex: nextSetIndex
-  }));
+    setIndex: this.sets.length
+  });
+  this.sets.push(newSet);
   // Return the promise that resolves after `this` lift is done
   // saving.
-  return this.saveAsync();
+  var lift = this;
+  return new Promise(function(resolve, reject) {
+    lift.saveAsync().then(function() {
+      // The new set resolved here doesn't have access to its parent,
+      // but it doesn't have an id, so the parent can access it that way.
+      resolve(newSet);
+    }).catch(function(err) {
+      if (err) throw err;
+    });
+  });
 };
 
 // Model
