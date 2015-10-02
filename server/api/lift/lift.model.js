@@ -146,15 +146,20 @@ LiftSchema.pre('save', function(next) {
 });
 // Methods need to be declared on the schema *before* the model
 // is registered.
-/* Add a set to this lift */
+/**
+ * Adds another set to this lift. Adding sets in succession
+ * needs to be done synchronously because set order matters.
+ */
 LiftSchema.methods.addSet = function(props, next) {
+  var nextSetIndex = this.sets.length;
   var newSet = new LiftSet({
     targetWeight: props.targetWeight,
     targetReps: props.targetReps,
     weight: props.weight,
     reps: props.reps,
-    setIndex: this.sets.length
+    setIndex: nextSetIndex
   });
+  console.log('newSet: ' + newSet);
   this.sets.push(newSet);
   // Return the promise that resolves after `this` lift is done
   // saving.
@@ -165,7 +170,10 @@ LiftSchema.methods.addSet = function(props, next) {
       // but it doesn't have an id, so the parent can access it that way.
       resolve(newSet);
     }).catch(function(err) {
-      if (err) throw err;
+      if (err) {
+        console.log(err);
+        throw err;
+      };
     });
   });
 };

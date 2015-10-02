@@ -45,6 +45,13 @@ describe('Set model', function() {
     });
 
     describe('moving up linearly', function() {
+      // Not sure why, but I'm getting a MongoError a result of
+      // duplicate `setIndex` even though there is no longer a unique
+      // index on `setIndex`.
+      beforeEach(function(done) {
+        removeAllLifts(done);
+      });
+
       it('for barbells should work', function(done) {
         var testData = {
           100: 105,
@@ -56,6 +63,7 @@ describe('Set model', function() {
           name: 'deadlift',
           weightMedium: WeightType.BARBELL.value
         });
+
         var promises = [];
         _.forOwn(testData, function(exp, oldTarget) {
           promises.push(new Promise(function(resolve, reject) {
@@ -71,7 +79,10 @@ describe('Set model', function() {
                 should.equal(act, exp);
                 resolve();
               }).catch(function(err) {
-                if (err) throw err;
+                if (err) {
+                  console.err(err);
+                  throw err;
+                }
                 done();
               });
           }));
@@ -84,6 +95,7 @@ describe('Set model', function() {
 
       it('should work for cables that are multiples of 10', function(done) {
         var cableLift = new Lift({
+          name: 'cable pushdown',
           weightMedium: WeightType.CABLE_MACHINE.value,
           weightMultiple: 10
         });
@@ -93,11 +105,25 @@ describe('Set model', function() {
           100: 110,
           200: 210
         };
-        // _.forOwn(testData, function(exp, oldTarget) {
-        // })
-        done();
-      });
 
+        Promise.reduce(_.keys(testData), function(total, oldTarget) {
+          var bluebirdPromise = cableLift
+                .addSet({targetWeight: oldTarget})
+                .then(function(newSet) {
+                  var liftSet = cableLift.sets.id(newSet);
+
+                  var act = liftSet.linearNextWeight({percent: 2.5});
+                  var exp = testData[liftSet.targetWeight];
+                  console.log('work done');
+                  should.equal(act, exp);
+                });
+          return bluebirdPromise;
+        }).then(function() {
+          done();
+        }).catch(function(err) {
+          if (err) throw err;
+        });
+      });
     });
   });
 });
