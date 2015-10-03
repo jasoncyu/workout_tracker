@@ -7,6 +7,11 @@
 
 var Thing = require('../api/thing/thing.model');
 var User = require('../api/user/user.model');
+var Lift = require('../api/lift/lift.model').Lift;
+var WeightType = require('../api/lift/lift.model').WeightType;
+var Promise = require('bluebird');
+Promise.promisifyAll(require('mongoose'));
+
 
 Thing.find({}).remove(function() {
   Thing.create({
@@ -46,4 +51,68 @@ User.find({}).remove(function() {
       console.log('finished populating users');
     }
   );
+});
+
+Lift.find({}).removeAsync(function() {
+  Lift.createAsync({
+    name: 'bench press',
+    sets: [
+      {
+        setIndex: 0,
+        weight: 250,
+        reps: 10
+      },
+      {
+        setIndex: 1,
+        weight: 230,
+        reps: 10
+      },
+      {
+        setIndex: 2,
+        weight: 210,
+        reps: 10
+      }
+    ],
+    weightMedium: WeightType.BARBELL.value,
+    topSetProgression: {
+      numSets: 3,
+      topWeight: 250,
+      betweenSetPercentDown: 10,
+      topSetPercentUp: 5
+    }
+  }).catch(function(err) {
+    if (err) throw err;
+  }).then(function() {
+    Lift.createAsync({
+      name: 'deadlift',
+      sets: [
+        {
+          setIndex: 0,
+          weight: 400,
+          reps: 3
+        },
+        {
+          setIndex: 1,
+          weight: 350,
+          reps: 5
+        },
+        {
+          setIndex: 2,
+          weight: 210,
+          reps: 7
+        }
+      ],
+      weightMedium: WeightType.BARBELL.value,
+      topSetProgression: {
+        numSets: 3,
+        topWeight: 250,
+        betweenSetPercentDown: 10,
+        topSetPercentUp: 5
+      }
+    }).catch(function(err) {
+      if (err) throw err;
+    });
+  });
+}).catch(function(err) {
+  if (err) throw err;
 });
