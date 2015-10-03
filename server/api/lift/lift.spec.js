@@ -223,29 +223,4 @@ describe('POST /api/lifts', function() {
         done();
       });
   });
-
-  it('should not allow creating two lifts with the same name', function(done) {
-    Lift.createAsync({name: liftName}).then(function() {
-      request(app)
-        .post('/api/lifts')
-        .send({name: liftName})
-        .expect(400)
-        .end(function(err, res) {
-          if (err) return done(err);
-          done();
-        });
-    });
-  });
-
-  it('should not allow creating two lifts with the same name even if the case is different', function(done) {
-    request(app)
-      .post('/api/lifts')
-      .send({name: liftName.toUpperCase()})
-      .expect(400)
-      .end(function(err, res) {
-        if (err) return done(err);
-
-        done();
-      });
-  });
 });
