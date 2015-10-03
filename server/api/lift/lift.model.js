@@ -137,6 +137,7 @@ var LiftSchema = new Schema({
     topSetPercentUp: {type: Number}
   }
 });
+
 LiftSchema.plugin(uniqueValidator);
 LiftSchema.pre('save', function(next) {
   // Transform lift name into something like 'bench_press'
@@ -191,9 +192,8 @@ LiftSchema.methods.addSet = function(props, next) {
 
 
 /**
- * Create the sets for a lift following top-set progression.
- *
- * Pre-condition: lift shouldn't have any sets yet.
+ * Creates the next top-set progression lift after successfully
+ * doing a top-set lift.
  */
 LiftSchema.statics.createNextTopSetLift = function(lastLift) {
   // Copy over relevant fields
