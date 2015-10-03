@@ -107,17 +107,16 @@ describe('Set model', function() {
         };
 
         Promise.reduce(_.keys(testData), function(total, oldTarget) {
-          var bluebirdPromise = cableLift
-                .addSet({targetWeight: oldTarget})
-                .then(function(newSet) {
-                  var liftSet = cableLift.sets.id(newSet);
+          return cableLift
+            .addSet({targetWeight: oldTarget})
+            .then(function(newSet) {
+              var liftSet = cableLift.sets.id(newSet);
 
-                  var act = liftSet.linearNextWeight({percent: 2.5});
-                  var exp = testData[liftSet.targetWeight];
-                  console.log('work done');
-                  should.equal(act, exp);
-                });
-          return bluebirdPromise;
+              var act = liftSet.linearNextWeight({percent: 2.5});
+              var exp = testData[liftSet.targetWeight];
+              console.log('work done');
+              should.equal(act, exp);
+            });
         }).then(function() {
           done();
         }).catch(function(err) {

@@ -159,7 +159,7 @@ LiftSchema.methods.addSet = function(props, next) {
     reps: props.reps,
     setIndex: nextSetIndex
   });
-  console.log('newSet: ' + newSet);
+
   this.sets.push(newSet);
   // Return the promise that resolves after `this` lift is done
   // saving.
