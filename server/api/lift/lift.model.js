@@ -5,7 +5,9 @@ var mongoose = require('mongoose'),
     uniqueValidator = require('mongoose-unique-validator'),
     _ = require('lodash'),
     Enum = require('enum'),
-    Promise = require('bluebird');
+    Promise = require('bluebird'),
+    util = require('util');
+
 
 var WeightType = new Enum({
   DUMBBELL: 'dumbbell',
@@ -70,10 +72,6 @@ SetSchema.methods.linearNextWeight = function(params) {
   var oldWeight = this.targetWeight;
   // Default amount to increase current weight by
   params.percent = params.percent || 2.5;
-  // The direction to move the weight next. We either increment the weight
-  // (up) or d
-  params.direction = params.direction || 'up';
-
 
   // Round down to nearest appropriate weight, unless that would mean
   // there's no change in weight, in which case we just increment to
@@ -95,9 +93,9 @@ SetSchema.methods.linearNextWeight = function(params) {
     newRawWeight / lift.weightMultiple) * lift.weightMultiple;
   // If the percentage based jump is too small, we jump to the next
   // possible weight. Otherwise, we use the percentage based jump.
-  if (params.direction === 'up') {
+  if (params.percent >= 0) {
     return Math.max(minJumpNextWeight, percentageBasedNextWeight);
-  } else if (params.direction === 'down') {
+  } else if (params.percent < 0) {
     return Math.min(minJumpNextWeight, percentageBasedNextWeight);
   }
 };
@@ -107,7 +105,7 @@ var LiftSet = mongoose.model('LiftSet', SetSchema);
 /* Lift */
 // Schema
 var LiftSchema = new Schema({
-  name: {type: String, required: true, unique: true},
+  name: {type: String, required: true},
   sets: [SetSchema],
   // The minimum amount of weight that can be loaded. It's constrained b/c
   // dumbbells only go so small, barbells only get so light, and the smallest
@@ -125,7 +123,19 @@ var LiftSchema = new Schema({
     type: String,
     enum: WeightType.enums.map(function(o) {
       return o.value;
-    })}
+    })},
+  // Top-set progression. A type of progression in which the first set
+  // of a lift is the heaviest and uses `topWeight` weight. Then, each
+  // subsequent set decreases until we have all `numSets` sets.
+  topSetProgression: {
+    numSets: {type: Number},
+    topWeight: {type: Number},
+    // The percentage to decrease the weight by between sets in this
+    // lift.
+    betweenSetPercentDown: {type: Number},
+    // The amount to increase the top set by.
+    topSetPercentUp: {type: Number}
+  }
 });
 LiftSchema.plugin(uniqueValidator);
 LiftSchema.pre('save', function(next) {
@@ -154,7 +164,8 @@ LiftSchema.methods.addSet = function(props, next) {
   var nextSetIndex = this.sets.length;
   var newSet = new LiftSet({
     targetWeight: props.targetWeight,
-    targetReps: props.targetReps,
+    targetMinReps: props.targetMinReps,
+    targetMaxReps: props.targetMaxReps,
     weight: props.weight,
     reps: props.reps,
     setIndex: nextSetIndex
@@ -177,6 +188,51 @@ LiftSchema.methods.addSet = function(props, next) {
     });
   });
 };
+
+
+/**
+ * Create the sets for a lift following top-set progression.
+ *
+ * Pre-condition: lift shouldn't have any sets yet.
+ */
+LiftSchema.statics.createNextTopSetLift = function(lastLift) {
+  // Copy over relevant fields
+  return Lift.createAsync(_.pick(lastLift, [
+    'name', 'weightMin', 'weightMax', 'weightMultiple',
+    'weightMedium', 'topSetProgression'
+  ])).then(function(lift) {
+    var lastTopSet = lastLift.sets[0];
+    var nextTopSetWeight = lastTopSet.linearNextWeight({
+      percent: lastLift.topSetProgression.topSetPercentUp});
+
+    return Promise.reduce(
+      new Array(lift.topSetProgression.numSets),
+      function(weight) {
+        return lift
+          .addSet({targetWeight: weight})
+          .then(function(newSet) {
+            return lift.sets.id(newSet).linearNextWeight({
+              percent: -lift.topSetProgression.betweenSetPercentDown
+            });
+          });
+      },
+      nextTopSetWeight
+    ).then(function() {
+      return lift;
+    });
+  }).catch(function(err) {
+    console.log('in createNextTopSetLift');
+    console.log(err.message);
+    throw err;
+  });
+};
+
+// Subclassing Error by using the strategy found here:
+// http://dailyjs.com/2014/01/30/exception-error/
+function LiftError(message) {
+  this.message = message;
+}
+util.inherits(LiftError, Error);
 
 // Model
 var Lift = mongoose.model('Lift', LiftSchema);

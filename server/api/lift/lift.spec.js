@@ -113,7 +113,6 @@ describe('Set model', function() {
 
                 var act = liftSet.linearNextWeight({percent: 2.5});
                 var exp = testData[liftSet.targetWeight];
-                console.log('work done');
                 should.equal(act, exp);
               });
           });
@@ -127,7 +126,7 @@ describe('Set model', function() {
   });
 });
 
-describe('Lift model', function() {
+describe('The Lift model', function() {
   before(function(done) {
     removeAllLifts(done);
   });
@@ -135,7 +134,7 @@ describe('Lift model', function() {
     removeAllLifts(done);
   });
 
-  it('can let you add sets', function(done) {
+  it('lets you add sets', function(done) {
     Lift.create({name: 'bench press'}, function(err, lift) {
       if (err) throw err;
 
@@ -148,6 +147,40 @@ describe('Lift model', function() {
 
         lift.sets[1].setIndex.should.be.eql(1);
         lift.sets.length.should.be.eql(2);
+        done();
+      });
+    });
+  });
+
+  describe('(top set progression)', function() {
+    it('creates the sets', function(done) {
+      Lift.createAsync({
+        name: 'bench press',
+        weightMedium: WeightType.BARBELL.value,
+        topSetProgression: {
+          numSets: 5,
+          topWeight: 200,
+          betweenSetPercentDown: 10,
+          topSetPercentUp: 5
+        },
+        sets: [{targetWeight: 200, setIndex: 0}]
+      }).then(function(oldLift) {
+        return Lift.createNextTopSetLift(oldLift);
+      }).then(function(benchPress) {
+        var expectedWeights = {
+          0: 210,
+          1: 190,
+          2: 170,
+          3: 155,
+          4: 140
+        };
+        benchPress.sets.forEach(function(liftSet, i) {
+          should.equal(liftSet.targetWeight, expectedWeights[i]);
+        });
+        done();
+      }).catch(function(err) {
+        console.log(err);
+        throw err;
         done();
       });
     });
@@ -171,7 +204,7 @@ describe('GET /api/lifts', function() {
 
 describe('POST /api/lifts', function() {
   var liftName = 'bench press';
-  before(function(done) {
+  beforeEach(function(done) {
     removeAllLifts(done);
   });
 
@@ -192,14 +225,16 @@ describe('POST /api/lifts', function() {
   });
 
   it('should not allow creating two lifts with the same name', function(done) {
-    request(app)
-      .post('/api/lifts')
-      .send({name: liftName})
-      .expect(400)
-      .end(function(err, res) {
-        if (err) return done(err);
-        done();
-      });
+    Lift.createAsync({name: liftName}).then(function() {
+      request(app)
+        .post('/api/lifts')
+        .send({name: liftName})
+        .expect(400)
+        .end(function(err, res) {
+          if (err) return done(err);
+          done();
+        });
+    });
   });
 
   it('should not allow creating two lifts with the same name even if the case is different', function(done) {
