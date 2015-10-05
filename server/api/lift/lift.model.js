@@ -29,6 +29,10 @@ var SetSchema = new Schema({
   // The amount of weight used in this set.
   weight: {type: Number}
 });
+SetSchema.set('toJSON', {getters: true});
+SetSchema.virtual('liftId').get(function() {
+  return this.parent()._id;
+});
 
 /**
  * Returns true if this set has actual reps and those

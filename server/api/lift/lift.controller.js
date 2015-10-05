@@ -34,8 +34,12 @@ exports.update = function(req, res) {
   Lift.findById(req.params.id, function (err, lift) {
     if (err) { return handleError(res, err); }
     if(!lift) { return res.status(404).send('Not Found'); }
-    var updated = _.merge(lift, req.body);
-    updated.save(function (err) {
+
+    // This doesn't do what we expect...
+    // var updated = _.merge(lift, req.body);
+    // But this works...
+    lift.sets = req.body.sets;
+    lift.save(function (err) {
       if (err) { return handleError(res, err); }
       return res.status(200).json(lift);
     });
